@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>topXit - Ultra Zamonaviy Musiqa Platformasi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0a0a0f',
+                            card: '#12121e',
+                            glass: 'rgba(18, 18, 30, 0.75)',
+                            accent: '#8b5cf6',
+                            neonPink: '#ec4899',
+                            neonCyan: '#06b6d4',
+                            neonGreen: '#10b981'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2s infinite alternate',
+                        'spin-slow': 'spin 12s linear infinite',
+                        'float': 'float 6s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 15px rgba(139, 92, 246, 0.4)' },
+                            '100%': { boxShadow: '0 0 35px rgba(236, 72, 153, 0.7)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #08080c;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(22, 22, 38, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: rgba(30, 30, 50, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(45, 45, 75, 0.6);
+            border-color: rgba(139, 92, 246, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px -10px rgba(139, 92, 246, 0.3);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #26263a;
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8b5cf6;
+        }
+
+        input[type=range] {
+            accent-color: #ec4899;
+        }
+
+        #visualizerCanvas {
+            filter: drop-shadow(0px 0px 8px rgba(6, 182, 212, 0.6));
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+
+    <!-- Background Particle Effect Canvas -->
+    <canvas id="bgParticles" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+
+    <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-4 lg:px-8 py-3 transition-all duration-300">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            
+            <!-- topXit Logo -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('home')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30 animate-pulse-glow">
+                    <i class="fa-solid fa-compact-disc text-2xl text-white animate-spin-slow"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wider text-white">
+                        top<span class="bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-cyan-400">Xit</span>
+                        <span class="text-[10px] font-bold text-cyan-400 ml-1 px-1.5 py-0.5 rounded border border-cyan-500/30">MUSIC</span>
+                    </h1>
+                    <p class="text-[10px] text-gray-400 font-medium tracking-widest uppercase">Saralangan Hitlar</p>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="flex-1 max-w-md hidden sm:block relative">
+                <div class="relative flex items-center">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 text-gray-400 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Qo'shiq, xonanda yoki janr qidiring..." 
+                        class="w-full bg-white/5 border border-white/10 focus:border-purple-500 rounded-full py-2 pl-9 pr-4 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all">
+                </div>
+            </div>
+
+            <!-- Header Action Buttons -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <button onclick="switchTab('mood')" class="px-3 py-1.5 rounded-full bg-purple-900/40 border border-purple-500/30 hover:border-purple-400 text-xs font-semibold text-purple-200 flex items-center gap-2 transition hover:bg-purple-800/50">
+                    <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i>
+                    <span class="hidden md:inline">Kayfiyat AI</span>
+                </button>
+
+                <button onclick="switchTab('favorites')" class="p-2 rounded-full bg-white/5 border border-white/10 hover:border-pink-500/50 text-gray-300 hover:text-pink-400 transition relative">
+                    <i class="fa-solid fa-heart text-sm"></i>
+                    <span id="favCountBadge" class="absolute -top-1 -right-1 bg-pink-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                </button>
+
+                <!-- Admin Button -->
+                <button onclick="tryAccessAdmin()" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-lock text-xs"></i>
+                    <span>Admin Panel</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Search Bar -->
+        <div class="mt-2 sm:hidden px-2">
+            <input type="text" oninput="handleSearch(this.value)" placeholder="Qo'shiq yoki xonanda..." 
+                class="w-full bg-white/5 border border-white/10 rounded-full py-1.5 px-4 text-xs text-gray-200 placeholder-gray-500 focus:outline-none">
+        </div>
+    </header>
+
+    <main class="relative z-10 max-w-7xl mx-auto px-4 lg:px-8 py-6 w-full flex-1 mb-28">
+
+        <!-- VIEW 1: HOME HUB -->
+        <section id="viewHome" class="space-y-8 transition-all duration-300">
+            
+            <!-- Hero Banner -->
+            <div class="relative rounded-3xl overflow-hidden glass-panel border border-white/10 p-6 sm:p-10 bg-gradient-to-r from-purple-950/60 via-brand-dark to-cyan-950/40">
+                <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-10 -top-10 w-72 h-72 bg-cyan-600/20 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="relative z-10 max-w-2xl space-y-4">
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-400 text-xs font-bold tracking-wide uppercase">
+                        <i class="fa-solid fa-fire animate-bounce"></i> topXit - Saralangan Musiqalar
+                    </span>
+                    <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                        Eng Ommabop <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-300 to-pink-500">Musiqalar Olami</span>
+                    </h2>
+                    <p class="text-gray-300 text-sm sm:text-base leading-relaxed">
+                        topXit platformasida eng so'nggi xitlarni tinglang, sinxron matnlarni kuzating hamda o'zingizga mos kayfiyat pleylistlarini tuzing.
+                    </p>
+                    <div class="flex flex-wrap items-center gap-3 pt-2">
+                        <button onclick="playRandomTrack()" class="px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-sm shadow-xl shadow-purple-600/30 flex items-center gap-2 transition transform active:scale-95">
+                            <i class="fa-solid fa-play"></i> Tasodifiy Xit
+                        </button>
+                        <button onclick="switchTab('mood')" class="px-6 py-3 rounded-full glass-panel hover:bg-white/10 text-gray-200 font-semibold text-sm border border-white/15 flex items-center gap-2 transition">
+                            <i class="fa-solid fa-compact-disc text-cyan-400"></i> Kayfiyat Bo'yicha
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Genre Filter Chips -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                <button onclick="filterByGenre('all')" class="genre-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md">Barchasi</button>
+                <button onclick="filterByGenre('Uzbek Trend')" class="genre-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">Uzbek Trend 🔥</button>
+                <button onclick="filterByGenre('Pop')" class="genre-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">Pop</button>
+                <button onclick="filterByGenre('Hip-Hop')" class="genre-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">Hip-Hop / Rap</button>
+                <button onclick="filterByGenre('Chill')" class="genre-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">Chill / Relax</button>
+                <button onclick="filterByGenre('Electronic')" class="genre-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10">Electronic</button>
+            </div>
+
+            <!-- Hand-picked Music Grid -->
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-cyan-400"></i> topXit - Tanlangan Musiqalar
+                    </h3>
+                    <span id="trackCountLabel" class="text-xs text-gray-400 font-medium">6 ta qo'shiq</span>
+                </div>
+                <div id="tracksGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 sm:gap-5">
+                    <!-- Dynamic Tracks JS -->
+                </div>
+            </div>
+
+            <!-- Top Charts & Equalizer -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 glass-panel p-5 rounded-2xl border border-white/10 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-trophy text-yellow-400"></i> topXit Chart Reytingi
+                        </h3>
+                        <span class="text-xs text-purple-400 font-medium">Haftalik eng yaxshilar</span>
+                    </div>
+                    <div id="topChartList" class="space-y-2">
+                        <!-- Dynamic Top Charts JS -->
+                    </div>
+                </div>
+
+                <div class="glass-panel p-5 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-sliders text-pink-400"></i> Ekvalayzer
+                        </h3>
+                        <p class="text-xs text-gray-400">Ovoz turini tanlang</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="text-xs text-gray-300 font-medium flex justify-between">
+                            <span>Preset:</span>
+                            <span id="activeEqName" class="text-cyan-400 font-bold">Standard</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setEqPreset('standard')" class="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500 text-xs text-gray-200">Standard</button>
+                            <button onclick="setEqPreset('bassboost')" class="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500 text-xs text-gray-200">Bass Boost 🔊</button>
+                            <button onclick="setEqPreset('vocal')" class="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500 text-xs text-gray-200">Vocal 🎤</button>
+                            <button onclick="setEqPreset('cyberpunk')" class="px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500 text-xs text-gray-200">Cyber Synth ⚡</button>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-purple-950/30 rounded-xl border border-purple-500/20 text-xs text-gray-300 space-y-1">
+                        <div class="flex items-center gap-2 font-semibold text-purple-300">
+                            <i class="fa-solid fa-circle-info"></i> topXit Info:
+                        </div>
+                        <p class="text-[11px] leading-relaxed text-gray-400">Pastki qismdagi Visualizer haqiqiy audio chastotasi asosida to'lqinlanadi.</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- VIEW 2: KAYFIYAT AI -->
+        <section id="viewMood" class="hidden space-y-6">
+            <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10">
+                <div class="max-w-2xl space-y-3">
+                    <span class="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-bold">
+                        <i class="fa-solid fa-brain"></i> topXit Mood AI
+                    </span>
+                    <h2 class="text-3xl font-extrabold text-white">Kayfiyatingizga Mos Musiqa</h2>
+                    <p class="text-gray-400 text-sm">Sizning kayfiyatingizga mos tushadigan eng zo'r topXit taronalari.</p>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
+                    <button onclick="generateMoodPlaylist('xursand')" class="p-4 rounded-2xl glass-card text-center space-y-2 hover:border-yellow-500/50 group">
+                        <div class="text-3xl group-hover:scale-110 transition">🥳</div>
+                        <div class="font-bold text-sm text-white">Xursand</div>
+                        <p class="text-[10px] text-gray-400">Quvnoq & Raqs</p>
+                    </button>
+
+                    <button onclick="generateMoodPlaylist('chill')" class="p-4 rounded-2xl glass-card text-center space-y-2 hover:border-cyan-500/50 group">
+                        <div class="text-3xl group-hover:scale-110 transition">🧘‍♂️</div>
+                        <div class="font-bold text-sm text-white">Chill Out</div>
+                        <p class="text-[10px] text-gray-400">Orom va Tinchlik</p>
+                    </button>
+
+                    <button onclick="generateMoodPlaylist('tungi')" class="p-4 rounded-2xl glass-card text-center space-y-2 hover:border-purple-500/50 group">
+                        <div class="text-3xl group-hover:scale-110 transition">🌌</div>
+                        <div class="font-bold text-sm text-white">Tungi Sayohat</div>
+                        <p class="text-[10px] text-gray-400">Sukunat & Avto</p>
+                    </button>
+
+                    <button onclick="generateMoodPlaylist('motivatsiya')" class="p-4 rounded-2xl glass-card text-center space-y-2 hover:border-pink-500/50 group">
+                        <div class="text-3xl group-hover:scale-110 transition">🔥</div>
+                        <div class="font-bold text-sm text-white">Motivatsiya</div>
+                        <p class="text-[10px] text-gray-400">Sport & Energiya</p>
+                    </button>
+
+                    <button onclick="generateMoodPlaylist('konsentratsiya')" class="p-4 rounded-2xl glass-card text-center space-y-2 hover:border-emerald-500/50 group">
+                        <div class="text-3xl group-hover:scale-110 transition">💻</div>
+                        <div class="font-bold text-sm text-white">Fokus & Dars</div>
+                        <p class="text-[10px] text-gray-400">Diqqatni Yig'ish</p>
+                    </button>
+
+                    <button onclick="generateMoodPlaylist('yurak')" class="p-4 rounded-2xl glass-card text-center space-y-2 hover:border-red-500/50 group">
+                        <div class="text-3xl group-hover:scale-110 transition">❤️‍🔥</div>
+                        <div class="font-bold text-sm text-white">Romantika</div>
+                        <p class="text-[10px] text-gray-400">Samimiy Tuyg'ular</p>
+                    </button>
+                </div>
+            </div>
+
+            <div id="moodResultSection" class="hidden glass-panel p-6 rounded-2xl border border-white/10 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 id="moodTitle" class="text-lg font-bold text-white flex items-center gap-2"></h3>
+                </div>
+                <div id="moodTracksList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: FAVORITES LIBRARY -->
+        <section id="viewFavorites" class="hidden space-y-6">
+            <div class="glass-panel p-6 rounded-2xl border border-white/10 flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-heart text-pink-500"></i> Sevimli Musiqalaringiz
+                    </h2>
+                    <p class="text-xs text-gray-400">Siz tanlagan yoqimli hitlar</p>
+                </div>
+                <button onclick="clearFavorites()" class="px-3 py-1.5 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs font-semibold">
+                    Tozalash
+                </button>
+            </div>
+
+            <div id="favoritesList" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4"></div>
+        </section>
+
+        <!-- VIEW 4: ADMIN PANEL (PROTECTED) -->
+        <section id="viewAdmin" class="hidden space-y-8">
+            
+            <div class="glass-panel p-6 rounded-3xl border border-cyan-500/30 space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-bold mb-1">
+                            <i class="fa-solid fa-shield-halved"></i> topXit Boshqaruv & Uchet
+                        </div>
+                        <h2 class="text-2xl font-black text-white">Admin Panel Dashboard</h2>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="openChangePasswordModal()" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-gray-200 text-xs font-semibold flex items-center gap-1.5 border border-white/10">
+                            <i class="fa-solid fa-key text-yellow-400"></i> Parolni O'zgartirish
+                        </button>
+                        <button onclick="openAddTrackModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-pink-500/30 flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i> Yangi Musiqa
+                        </button>
+                        <button onclick="logoutAdmin()" class="px-3.5 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-semibold flex items-center gap-1.5 border border-red-500/30">
+                            <i class="fa-solid fa-right-from-bracket"></i> Chaqish
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="p-4 rounded-2xl glass-card space-y-1">
+                        <p class="text-xs text-gray-400">Jami Musiqalar</p>
+                        <h4 id="statTotalTracks" class="text-2xl font-black text-cyan-400">0</h4>
+                        <p class="text-[10px] text-gray-500">Omborxona ucheti</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl glass-card space-y-1">
+                        <p class="text-xs text-gray-400">Jami Eshitilgan</p>
+                        <h4 id="statTotalPlays" class="text-2xl font-black text-purple-400">0</h4>
+                        <p class="text-[10px] text-gray-500">Tinglashlar statistikasi</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl glass-card space-y-1">
+                        <p class="text-xs text-gray-400">Sevimli Bajarilgan</p>
+                        <h4 id="statTotalFavs" class="text-2xl font-black text-pink-400">0</h4>
+                        <p class="text-[10px] text-gray-500">Yoqtirilganlar</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl glass-card space-y-1">
+                        <p class="text-xs text-gray-400">Xonandalar</p>
+                        <h4 id="statTotalArtists" class="text-2xl font-black text-emerald-400">0</h4>
+                        <p class="text-[10px] text-gray-500">Mualliflar soni</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Music CRUD Accounting Table -->
+            <div class="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+                <div class="p-5 border-b border-white/10 flex items-center justify-between">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-cyan-400"></i> topXit Musiqalar Boshqaruvi
+                    </h3>
+                    <span class="text-xs text-gray-400">Uchet Jadvali</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-gray-300">
+                        <thead class="bg-white/5 text-gray-400 uppercase text-[10px] tracking-wider">
+                            <tr>
+                                <th class="p-3">Track</th>
+                                <th class="p-3">Xonanda</th>
+                                <th class="p-3">Janr</th>
+                                <th class="p-3">Davomiyligi</th>
+                                <th class="p-3">Plays (Uchet)</th>
+                                <th class="p-3 text-right">Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTracksTable" class="divide-y divide-white/5">
+                            <!-- Dynamic Admin Table JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    
+    <!-- ADMIN LOGIN MODAL -->
+    <div id="adminLoginModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel max-w-sm w-full p-6 rounded-3xl border border-purple-500/30 space-y-5 text-center relative animate-float">
+            <button onclick="closeAdminLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center mx-auto shadow-lg shadow-purple-500/40">
+                <i class="fa-solid fa-lock text-white text-xl"></i>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-bold text-white">Admin Panelga Kirish</h3>
+                <p class="text-xs text-gray-400 mt-1">Davom etish uchun parolni kiriting</p>
+                <p class="text-[11px] text-cyan-400 font-mono mt-1">(Boshlang'ich parol: <span class="underline">admin</span>)</p>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <input type="password" id="adminPasswordInput" placeholder="Parolni kiriting..." required
+                        class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-center text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 text-sm">
+                    <p id="adminLoginError" class="text-red-400 text-xs mt-1.5 hidden font-medium">Xato parol! Qayta urinib ko'ring.</p>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs shadow-lg shadow-purple-500/30 transition">
+                    Kirish
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CHANGE PASSWORD MODAL -->
+    <div id="changePasswordModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel max-w-sm w-full p-6 rounded-3xl border border-white/20 space-y-4 relative">
+            <button onclick="closeChangePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div>
+                <h3 class="text-lg font-bold text-white">Parolni O'zgartirish</h3>
+                <p class="text-xs text-gray-400">Admin paneli uchun yangi parol o'rnating</p>
+            </div>
+
+            <form onsubmit="handleChangePassword(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-gray-300 mb-1">Eski Parol:</label>
+                    <input type="password" id="oldPasswordInput" required class="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-gray-300 mb-1">Yangi Parol:</label>
+                    <input type="password" id="newPasswordInput" required class="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-purple-500">
+                </div>
+                <p id="changePassMsg" class="text-xs font-medium hidden"></p>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeChangePasswordModal()" class="px-3 py-1.5 rounded-xl bg-white/10 text-gray-300">Bekor qilish</button>
+                    <button type="submit" class="px-4 py-1.5 rounded-xl bg-purple-600 text-white font-bold">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT TRACK MODAL -->
+    <div id="trackModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel max-w-lg w-full p-6 rounded-3xl border border-white/20 space-y-5 relative">
+            <button onclick="closeAddTrackModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div>
+                <h3 id="modalTitle" class="text-xl font-bold text-white">Yangi Musiqa Qo'shish</h3>
+                <p class="text-xs text-gray-400">topXit bazasiga yangi tarrona qo'shing</p>
+            </div>
+
+            <form id="trackForm" onsubmit="handleSaveTrack(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="editTrackId">
+                
+                <div>
+                    <label class="block text-gray-300 mb-1 font-medium">Nomi (Title):</label>
+                    <input type="text" id="formTitle" required placeholder="Masalan: Tungi Buxoro" 
+                        class="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-purple-500">
+                </div>
+
+                <div>
+                    <label class="block text-gray-300 mb-1 font-medium">Xonanda (Artist):</label>
+                    <input type="text" id="formArtist" required placeholder="Masalan: Jahongir Otajonov" 
+                        class="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-purple-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-gray-300 mb-1 font-medium">Janr:</label>
+                        <select id="formGenre" class="w-full bg-zinc-900 border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-purple-500">
+                            <option value="Uzbek Trend">Uzbek Trend</option>
+                            <option value="Pop">Pop</option>
+                            <option value="Hip-Hop">Hip-Hop</option>
+                            <option value="Chill">Chill</option>
+                            <option value="Electronic">Electronic</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-300 mb-1 font-medium">Kayfiyat (Mood):</label>
+                        <select id="formMood" class="w-full bg-zinc-900 border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-purple-500">
+                            <option value="xursand">Xursand</option>
+                            <option value="chill">Chill Out</option>
+                            <option value="tungi">Tungi Sayohat</option>
+                            <option value="motivatsiya">Motivatsiya</option>
+                            <option value="konsentratsiya">Fokus & Dars</option>
+                            <option value="yurak">Romantika</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-300 mb-1 font-medium">Muqova Rasm URL (Cover):</label>
+                    <input type="url" id="formCover" required placeholder="https://..." 
+                        class="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-purple-500">
+                </div>
+
+                <div>
+                    <label class="block text-gray-300 mb-1 font-medium">Audio Fayl URL (MP3 Stream):</label>
+                    <input type="url" id="formAudio" required placeholder="https://..." 
+                        class="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-purple-500">
+                </div>
+
+                <div>
+                    <label class="block text-gray-300 mb-1 font-medium">Qo'shiq Matni (Lyrics):</label>
+                    <textarea id="formLyrics" rows="3" placeholder="Sinxron matnlarni qatorma-qator yozing..." 
+                        class="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-white focus:outline-none focus:border-purple-500"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddTrackModal()" class="px-4 py-2 rounded-xl bg-white/10 text-gray-300 hover:bg-white/20 font-semibold">Bekor Qilish</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold hover:from-purple-500 hover:to-pink-500">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LYRICS MODAL -->
+    <div id="lyricsModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-lg hidden flex flex-col items-center justify-center p-6 text-center">
+        <button onclick="toggleLyricsModal()" class="absolute top-6 right-6 text-gray-400 hover:text-white text-2xl">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="max-w-xl w-full space-y-6">
+            <img id="lyricsCover" src="" class="w-32 h-32 rounded-2xl mx-auto shadow-2xl shadow-purple-500/40 object-cover">
+            <div>
+                <h3 id="lyricsTitle" class="text-2xl font-black text-white">Track Title</h3>
+                <p id="lyricsArtist" class="text-sm text-cyan-400 font-semibold">Artist</p>
+            </div>
+
+            <div id="lyricsBody" class="h-64 overflow-y-auto space-y-3 p-4 text-base text-gray-300 font-medium leading-relaxed scrollbar-none"></div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/10 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            <div class="flex items-center gap-3 w-full md:w-1/4">
+                <div class="relative group">
+                    <img id="playerCover" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=300&q=80" 
+                        class="w-12 h-12 rounded-xl object-cover border border-white/10 shadow-md">
+                    <div id="playerDiscSpin" class="absolute inset-0 rounded-xl bg-black/40 hidden items-center justify-center">
+                        <i class="fa-solid fa-compact-disc text-white animate-spin"></i>
+                    </div>
+                </div>
+
+                <div class="truncate">
+                    <h4 id="playerTitle" class="text-sm font-bold text-white truncate">topXit Music</h4>
+                    <p id="playerArtist" class="text-xs text-gray-400 truncate">Sifatli musiqa ijrosi</p>
+                </div>
+
+                <button id="playerFavBtn" onclick="toggleFavoriteCurrent()" class="ml-2 text-gray-400 hover:text-pink-500 text-base transition">
+                    <i class="fa-regular fa-heart"></i>
+                </button>
+
+                <button onclick="toggleLyricsModal()" class="text-gray-400 hover:text-cyan-400 text-sm transition" title="Sinxron Matn">
+                    <i class="fa-solid fa-quote-right"></i>
+                </button>
+            </div>
+
+            <div class="flex flex-col items-center w-full md:w-2/4 space-y-1.5">
+                <div class="flex items-center gap-5">
+                    <button id="shuffleBtn" onclick="toggleShuffle()" class="text-gray-400 hover:text-white text-xs transition">
+                        <i class="fa-solid fa-shuffle"></i>
+                    </button>
+                    <button onclick="playPrevTrack()" class="text-gray-300 hover:text-white text-base transition">
+                        <i class="fa-solid fa-backward-step"></i>
+                    </button>
+                    <button id="playPauseBtn" onclick="togglePlayPause()" class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 hover:scale-105 text-white flex items-center justify-center shadow-lg shadow-purple-500/30 transition">
+                        <i class="fa-solid fa-play text-base ml-0.5"></i>
+                    </button>
+                    <button onclick="playNextTrack()" class="text-gray-300 hover:text-white text-base transition">
+                        <i class="fa-solid fa-forward-step"></i>
+                    </button>
+                    <button id="repeatBtn" onclick="toggleRepeat()" class="text-gray-400 hover:text-white text-xs transition">
+                        <i class="fa-solid fa-repeat"></i>
+                    </button>
+                </div>
+
+                <div class="w-full flex items-center gap-2 text-[11px] text-gray-400 font-mono">
+                    <span id="currentTime">0:00</span>
+                    <div class="relative flex-1 flex items-center">
+                        <input type="range" id="seekSlider" value="0" max="100" oninput="handleSeek(this.value)" 
+                            class="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <span id="durationTime">0:00</span>
+                </div>
+            </div>
+
+            <div class="hidden md:flex items-center justify-end gap-4 w-1/4">
+                <div class="flex items-center gap-1 bg-black/30 p-1.5 rounded-xl border border-white/5">
+                    <canvas id="visualizerCanvas" width="80" height="24" class="rounded"></canvas>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <i id="volumeIcon" class="fa-solid fa-volume-high text-gray-400 text-xs"></i>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8" oninput="setVolume(this.value)"
+                        class="w-16 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Hidden Audio Engine -->
+    <audio id="audioElement" crossorigin="anonymous"></audio>
+
+    <script>
+        // Sample Catalog
+        const initialTracks = [
+            {
+                id: '1',
+                title: 'topXit Night Ride',
+                artist: 'Sardor Rahimxon & Cyber',
+                genre: 'Uzbek Trend',
+                mood: 'tungi',
+                duration: '3:45',
+                plays: 1840,
+                cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=600&q=80',
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                lyrics: "topXit xitlar har kecha va kunduz...\nKo'kda porlar muqaddas yulduz...\nBarchamiz birga topXit davrasida..."
+            },
+            {
+                id: '2',
+                title: 'Buxoro Hit 2026',
+                artist: 'Rayhon',
+                genre: 'Pop',
+                mood: 'xursand',
+                duration: '4:12',
+                plays: 3100,
+                cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=600&q=80',
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+                lyrics: "Sehrli tarronalar yangraydi bugun...\ntopXit bilan yuragingiz bo'lar mamnun..."
+            },
+            {
+                id: '3',
+                title: 'Cyber Motivation',
+                artist: 'Konsta',
+                genre: 'Hip-Hop',
+                mood: 'motivatsiya',
+                duration: '3:20',
+                plays: 4210,
+                cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80',
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+                lyrics: "To'xtama hech qachon, olg'a intil...\ntopXit pleylisti bilan g'alaba bil..."
+            },
+            {
+                id: '4',
+                title: 'Chill Orom',
+                artist: 'Sevara',
+                genre: 'Chill',
+                mood: 'chill',
+                duration: '5:01',
+                plays: 1120,
+                cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80',
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+                lyrics: "Tinchlik yoyiladi ko'ngil uyingda...\nXotirjamlik topXit qo'shiqlarida..."
+            }
+        ];
+
+        // App States & Storage
+        let tracks = JSON.parse(localStorage.getItem('topXit_tracks')) || initialTracks;
+        let favorites = JSON.parse(localStorage.getItem('topXit_favs')) || ['1', '3'];
+        let adminPassword = localStorage.getItem('topXit_admin_pass') || 'admin';
+        let isAdminLoggedIn = false;
+
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        let isShuffle = false;
+        let isRepeat = false;
+
+        const audio = document.getElementById('audioElement');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const seekSlider = document.getElementById('seekSlider');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationTimeEl = document.getElementById('durationTime');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initBackgroundParticles();
+            renderTracksGrid(tracks);
+            renderTopCharts();
+            updateStats();
+            updateFavBadge();
+
+            audio.volume = 0.8;
+            audio.addEventListener('timeupdate', updateSeekProgress);
+            audio.addEventListener('loadedmetadata', () => {
+                durationTimeEl.innerText = formatTime(audio.duration);
+            });
+            audio.addEventListener('ended', () => {
+                if (isRepeat) {
+                    audio.currentTime = 0;
+                    audio.play();
+                } else {
+                    playNextTrack();
+                }
+            });
+
+            setupAudioVisualizer();
+        });
+
+        function saveState() {
+            localStorage.setItem('topXit_tracks', JSON.stringify(tracks));
+            localStorage.setItem('topXit_favs', JSON.stringify(favorites));
+            updateStats();
+            updateFavBadge();
+        }
+
+        /* --- ADMIN AUTHENTICATION SECURITY --- */
+        function tryAccessAdmin() {
+            if (isAdminLoggedIn) {
+                switchTab('admin');
+            } else {
+                document.getElementById('adminPasswordInput').value = '';
+                document.getElementById('adminLoginError').classList.add('hidden');
+                document.getElementById('adminLoginModal').classList.remove('hidden');
+            }
+        }
+
+        function closeAdminLoginModal() {
+            document.getElementById('adminLoginModal').classList.add('hidden');
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const entered = document.getElementById('adminPasswordInput').value;
+            if (entered === adminPassword) {
+                isAdminLoggedIn = true;
+                closeAdminLoginModal();
+                switchTab('admin');
+            } else {
+                document.getElementById('adminLoginError').classList.remove('hidden');
+            }
+        }
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            switchTab('home');
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('oldPasswordInput').value = '';
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('changePassMsg').classList.add('hidden');
+            document.getElementById('changePasswordModal').classList.remove('hidden');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('changePasswordModal').classList.add('hidden');
+        }
+
+        function handleChangePassword(e) {
+            e.preventDefault();
+            const oldP = document.getElementById('oldPasswordInput').value;
+            const newP = document.getElementById('newPasswordInput').value;
+            const msg = document.getElementById('changePassMsg');
+
+            if (oldP !== adminPassword) {
+                msg.innerText = "Eski parol noto'g'ri!";
+                msg.className = "text-xs font-medium text-red-400";
+                msg.classList.remove('hidden');
+                return;
+            }
+
+            adminPassword = newP;
+            localStorage.setItem('topXit_admin_pass', newP);
+            msg.innerText = "Parol muvaffaqiyatli o'zgartirildi!";
+            msg.className = "text-xs font-medium text-green-400";
+            msg.classList.remove('hidden');
+
+            setTimeout(() => {
+                closeChangePasswordModal();
+            }, 1200);
+        }
+
+        /* --- VIEW CONTROLLER --- */
+        function switchTab(tabName) {
+            if (tabName === 'admin' && !isAdminLoggedIn) {
+                tryAccessAdmin();
+                return;
+            }
+
+            document.getElementById('viewHome').classList.add('hidden');
+            document.getElementById('viewMood').classList.add('hidden');
+            document.getElementById('viewFavorites').classList.add('hidden');
+            document.getElementById('viewAdmin').classList.add('hidden');
+
+            if (tabName === 'home') document.getElementById('viewHome').classList.remove('hidden');
+            if (tabName === 'mood') document.getElementById('viewMood').classList.remove('hidden');
+            if (tabName === 'favorites') {
+                renderFavorites();
+                document.getElementById('viewFavorites').classList.remove('hidden');
+            }
+            if (tabName === 'admin') {
+                renderAdminTable();
+                document.getElementById('viewAdmin').classList.remove('hidden');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* --- RENDERING FUNCTIONS --- */
+        function renderTracksGrid(trackList) {
+            const grid = document.getElementById('tracksGrid');
+            document.getElementById('trackCountLabel').innerText = `${trackList.length} ta qo'shiq`;
+            grid.innerHTML = '';
+
+            if (trackList.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">Musiqalar topilmadi.</div>`;
+                return;
+            }
+
+            trackList.forEach((track) => {
+                const isFav = favorites.includes(track.id);
+                const card = document.createElement('div');
+                card.className = "glass-card rounded-2xl p-3 space-y-3 relative group cursor-pointer flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="relative rounded-xl overflow-hidden aspect-square">
+                        <img src="${track.cover}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                            <button onclick="playTrackById('${track.id}')" class="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-lg transform scale-90 hover:scale-100 transition">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                        </div>
+                        <button onclick="toggleFavorite(event, '${track.id}')" class="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-${isFav ? 'pink-500' : 'gray-300'} hover:text-pink-500 text-xs transition">
+                            <i class="fa-${isFav ? 'solid' : 'regular'} fa-heart"></i>
+                        </button>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-sm text-white truncate">${track.title}</h4>
+                        <p class="text-xs text-gray-400 truncate">${track.artist}</p>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[11px] text-gray-500 border-t border-white/5 pt-2">
+                        <span><i class="fa-solid fa-headphones text-purple-400"></i> ${track.plays}</span>
+                        <span>${track.duration}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderTopCharts() {
+            const list = document.getElementById('topChartList');
+            list.innerHTML = '';
+            const sorted = [...tracks].sort((a, b) => b.plays - a.plays).slice(0, 5);
+
+            sorted.forEach((track, index) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition border border-white/5 cursor-pointer";
+                item.onclick = () => playTrackById(track.id);
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 font-black text-sm text-center ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-amber-600' : 'text-gray-500'}">0${index + 1}</span>
+                        <img src="${track.cover}" class="w-10 h-10 rounded-lg object-cover">
+                        <div>
+                            <h5 class="text-xs font-bold text-white">${track.title}</h5>
+                            <p class="text-[11px] text-gray-400">${track.artist}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs text-gray-400">
+                        <span class="hidden sm:inline">${track.duration}</span>
+                        <button class="p-2 text-cyan-400 hover:scale-110 transition"><i class="fa-solid fa-circle-play text-lg"></i></button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        /* --- PLAYER CONTROLS --- */
+        function loadTrack(index) {
+            if (index < 0 || index >= tracks.length) return;
+            currentTrackIndex = index;
+            const track = tracks[currentTrackIndex];
+
+            audio.src = track.audio;
+            document.getElementById('playerCover').src = track.cover;
+            document.getElementById('playerTitle').innerText = track.title;
+            document.getElementById('playerArtist').innerText = track.artist;
+
+            track.plays++;
+            saveState();
+            updateFavHeartIcon();
+        }
+
+        function playTrackById(id) {
+            const idx = tracks.findIndex(t => t.id === id);
+            if (idx !== -1) {
+                loadTrack(idx);
+                playAudio();
+            }
+        }
+
+        function togglePlayPause() {
+            if (!audio.src || audio.src === '') loadTrack(0);
+            if (isPlaying) pauseAudio();
+            else playAudio();
+        }
+
+        function playAudio() {
+            audio.play().then(() => {
+                isPlaying = true;
+                playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-base"></i>`;
+                document.getElementById('playerDiscSpin').classList.remove('hidden');
+                document.getElementById('playerDiscSpin').classList.add('flex');
+            }).catch(e => console.log('Audio playback block:', e));
+        }
+
+        function pauseAudio() {
+            audio.pause();
+            isPlaying = false;
+            playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-base ml-0.5"></i>`;
+            document.getElementById('playerDiscSpin').classList.add('hidden');
+            document.getElementById('playerDiscSpin').classList.remove('flex');
+        }
+
+        function playNextTrack() {
+            if (isShuffle) currentTrackIndex = Math.floor(Math.random() * tracks.length);
+            else currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+            loadTrack(currentTrackIndex);
+            playAudio();
+        }
+
+        function playPrevTrack() {
+            currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+            loadTrack(currentTrackIndex);
+            playAudio();
+        }
+
+        function playRandomTrack() {
+            currentTrackIndex = Math.floor(Math.random() * tracks.length);
+            loadTrack(currentTrackIndex);
+            playAudio();
+        }
+
+        function handleSeek(val) {
+            if (audio.duration) audio.currentTime = (val / 100) * audio.duration;
+        }
+
+        function updateSeekProgress() {
+            if (audio.duration) {
+                seekSlider.value = (audio.currentTime / audio.duration) * 100;
+                currentTimeEl.innerText = formatTime(audio.currentTime);
+            }
+        }
+
+        function setVolume(val) {
+            audio.volume = val;
+            const icon = document.getElementById('volumeIcon');
+            if (val == 0) icon.className = "fa-solid fa-volume-xmark text-gray-400 text-xs";
+            else if (val < 0.5) icon.className = "fa-solid fa-volume-low text-gray-400 text-xs";
+            else icon.className = "fa-solid fa-volume-high text-gray-400 text-xs";
+        }
+
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            document.getElementById('shuffleBtn').classList.toggle('text-pink-500', isShuffle);
+        }
+
+        function toggleRepeat() {
+            isRepeat = !isRepeat;
+            document.getElementById('repeatBtn').classList.toggle('text-pink-500', isRepeat);
+        }
+
+        function formatTime(sec) {
+            if (isNaN(sec)) return "0:00";
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        /* --- FAVORITES --- */
+        function toggleFavorite(e, id) {
+            e.stopPropagation();
+            if (favorites.includes(id)) favorites = favorites.filter(f => f !== id);
+            else favorites.push(id);
+            saveState();
+            renderTracksGrid(tracks);
+            updateFavHeartIcon();
+        }
+
+        function toggleFavoriteCurrent() {
+            const currentTrack = tracks[currentTrackIndex];
+            if (currentTrack) toggleFavorite(new Event('click'), currentTrack.id);
+        }
+
+        function updateFavHeartIcon() {
+            const currentTrack = tracks[currentTrackIndex];
+            const btn = document.getElementById('playerFavBtn');
+            if (currentTrack && favorites.includes(currentTrack.id)) {
+                btn.innerHTML = `<i class="fa-solid fa-heart text-pink-500"></i>`;
+            } else {
+                btn.innerHTML = `<i class="fa-regular fa-heart"></i>`;
+            }
+        }
+
+        function updateFavBadge() {
+            document.getElementById('favCountBadge').innerText = favorites.length;
+        }
+
+        function renderFavorites() {
+            const favTracks = tracks.filter(t => favorites.includes(t.id));
+            const list = document.getElementById('favoritesList');
+            list.innerHTML = '';
+
+            if (favTracks.length === 0) {
+                list.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">Sevimli musiqalaringiz hozircha yo'q.</div>`;
+                return;
+            }
+
+            favTracks.forEach(track => {
+                const card = document.createElement('div');
+                card.className = "glass-card rounded-2xl p-3 space-y-3 relative group cursor-pointer";
+                card.onclick = () => playTrackById(track.id);
+                card.innerHTML = `
+                    <div class="relative rounded-xl overflow-hidden aspect-square">
+                        <img src="${track.cover}" class="w-full h-full object-cover">
+                        <button onclick="toggleFavorite(event, '${track.id}')" class="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-pink-500 text-xs">
+                            <i class="fa-solid fa-heart"></i>
+                        </button>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm text-white truncate">${track.title}</h4>
+                        <p class="text-xs text-gray-400 truncate">${track.artist}</p>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function clearFavorites() {
+            favorites = [];
+            saveState();
+            renderFavorites();
+        }
+
+        /* --- SEARCH & MOOD --- */
+        function handleSearch(query) {
+            const q = query.toLowerCase().trim();
+            const filtered = tracks.filter(t => 
+                t.title.toLowerCase().includes(q) || 
+                t.artist.toLowerCase().includes(q) ||
+                t.genre.toLowerCase().includes(q)
+            );
+            renderTracksGrid(filtered);
+        }
+
+        function filterByGenre(genre) {
+            document.querySelectorAll('.genre-btn').forEach(btn => {
+                btn.classList.remove('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'text-white');
+                btn.classList.add('bg-white/5', 'text-gray-300');
+            });
+
+            if (genre === 'all') renderTracksGrid(tracks);
+            else renderTracksGrid(tracks.filter(t => t.genre.toLowerCase() === genre.toLowerCase()));
+        }
+
+        function generateMoodPlaylist(moodKey) {
+            const moodNames = {
+                xursand: 'Quvnoq & Raqs Kayfiyati 🥳',
+                chill: 'Orom va Tinchlik (Chill) 🧘‍♂️',
+                tungi: 'Tungi Sayohat Avto 🌌',
+                motivatsiya: 'Motivatsiya va Energiya 🔥',
+                konsentratsiya: 'Dars va Fokus 💻',
+                yurak: 'Romantika Tuyg\'ulari ❤️‍🔥'
+            };
+
+            const moodTracks = tracks.filter(t => t.mood === moodKey);
+            const section = document.getElementById('moodResultSection');
+            const titleEl = document.getElementById('moodTitle');
+            const listEl = document.getElementById('moodTracksList');
+
+            titleEl.innerHTML = `<i class="fa-solid fa-sparkles text-pink-400"></i> ${moodNames[moodKey] || 'Kayfiyat To\'plami'}`;
+            listEl.innerHTML = '';
+
+            if (moodTracks.length === 0) {
+                listEl.innerHTML = `<p class="col-span-2 text-xs text-gray-400 py-4">Ushbu kayfiyat uchun musiqalar topilmadi.</p>`;
+            } else {
+                moodTracks.forEach(track => {
+                    const item = document.createElement('div');
+                    item.className = "flex items-center justify-between p-3 rounded-xl glass-card cursor-pointer";
+                    item.onclick = () => playTrackById(track.id);
+                    item.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <img src="${track.cover}" class="w-10 h-10 rounded-lg object-cover">
+                            <div>
+                                <h5 class="text-xs font-bold text-white">${track.title}</h5>
+                                <p class="text-[11px] text-gray-400">${track.artist}</p>
+                            </div>
+                        </div>
+                        <button class="text-cyan-400 hover:scale-110 text-base"><i class="fa-solid fa-play"></i></button>
+                    `;
+                    listEl.appendChild(item);
+                });
+            }
+
+            section.classList.remove('hidden');
+        }
+
+        function toggleLyricsModal() {
+            const modal = document.getElementById('lyricsModal');
+            const currentTrack = tracks[currentTrackIndex];
+
+            if (modal.classList.contains('hidden') && currentTrack) {
+                document.getElementById('lyricsCover').src = currentTrack.cover;
+                document.getElementById('lyricsTitle').innerText = currentTrack.title;
+                document.getElementById('lyricsArtist').innerText = currentTrack.artist;
+                
+                const lines = (currentTrack.lyrics || "Sinxron matn mavjud emas.").split('\n');
+                document.getElementById('lyricsBody').innerHTML = lines.map(line => `<p class="hover:text-cyan-300 transition py-1 cursor-pointer">${line}</p>`).join('');
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function setEqPreset(name) {
+            document.getElementById('activeEqName').innerText = name.toUpperCase();
+            const canvas = document.getElementById('visualizerCanvas');
+            canvas.style.filter = name === 'bassboost' ? 'drop-shadow(0px 0px 12px #ec4899)' :
+                                  name === 'cyberpunk' ? 'drop-shadow(0px 0px 12px #8b5cf6)' : 
+                                  'drop-shadow(0px 0px 8px #06b6d4)';
+        }
+
+        /* --- ADMIN DATA MANAGEMENT --- */
+        function renderAdminTable() {
+            const tbody = document.getElementById('adminTracksTable');
+            tbody.innerHTML = '';
+
+            tracks.forEach((track) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-white/5 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-medium text-white flex items-center gap-2">
+                        <img src="${track.cover}" class="w-8 h-8 rounded object-cover">
+                        <span class="truncate max-w-[120px]">${track.title}</span>
+                    </td>
+                    <td class="p-3 text-gray-300">${track.artist}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded bg-purple-900/40 text-purple-300 font-semibold text-[10px]">${track.genre}</span></td>
+                    <td class="p-3 text-gray-400">${track.duration}</td>
+                    <td class="p-3 font-mono text-cyan-400 font-bold">${track.plays} ta</td>
+                    <td class="p-3 text-right space-x-2">
+                        <button onclick="editTrackModal('${track.id}')" class="p-1.5 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteTrack('${track.id}')" class="p-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('statTotalTracks').innerText = tracks.length;
+            const totalPlays = tracks.reduce((acc, t) => acc + (t.plays || 0), 0);
+            document.getElementById('statTotalPlays').innerText = totalPlays.toLocaleString();
+            document.getElementById('statTotalFavs').innerText = favorites.length;
+
+            const artists = new Set(tracks.map(t => t.artist));
+            document.getElementById('statTotalArtists').innerText = artists.size;
+        }
+
+        function openAddTrackModal() {
+            document.getElementById('modalTitle').innerText = "Yangi Musiqa Qo'shish";
+            document.getElementById('editTrackId').value = "";
+            document.getElementById('trackForm').reset();
+            document.getElementById('trackModal').classList.remove('hidden');
+        }
+
+        function closeAddTrackModal() {
+            document.getElementById('trackModal').classList.add('hidden');
+        }
+
+        function editTrackModal(id) {
+            const track = tracks.find(t => t.id === id);
+            if (!track) return;
+
+            document.getElementById('modalTitle').innerText = "Musiqani Tahrirlash";
+            document.getElementById('editTrackId').value = track.id;
+            document.getElementById('formTitle').value = track.title;
+            document.getElementById('formArtist').value = track.artist;
+            document.getElementById('formGenre').value = track.genre;
+            document.getElementById('formMood').value = track.mood || 'xursand';
+            document.getElementById('formCover').value = track.cover;
+            document.getElementById('formAudio').value = track.audio;
+            document.getElementById('formLyrics').value = track.lyrics || '';
+
+            document.getElementById('trackModal').classList.remove('hidden');
+        }
+
+        function handleSaveTrack(e) {
+            e.preventDefault();
+            const id = document.getElementById('editTrackId').value;
+            const title = document.getElementById('formTitle').value;
+            const artist = document.getElementById('formArtist').value;
+            const genre = document.getElementById('formGenre').value;
+            const mood = document.getElementById('formMood').value;
+            const cover = document.getElementById('formCover').value;
+            const audioUrl = document.getElementById('formAudio').value;
+            const lyrics = document.getElementById('formLyrics').value;
+
+            if (id) {
+                const idx = tracks.findIndex(t => t.id === id);
+                if (idx !== -1) {
+                    tracks[idx] = { ...tracks[idx], title, artist, genre, mood, cover, audio: audioUrl, lyrics };
+                }
+            } else {
+                tracks.unshift({
+                    id: Date.now().toString(),
+                    title, artist, genre, mood, duration: '3:30', plays: 0, cover, audio: audioUrl, lyrics
+                });
+            }
+
+            saveState();
+            renderTracksGrid(tracks);
+            renderAdminTable();
+            closeAddTrackModal();
+        }
+
+        function deleteTrack(id) {
+            if (confirm("Ushbu musiqani o'chirmoqchimisiz?")) {
+                tracks = tracks.filter(t => t.id !== id);
+                saveState();
+                renderTracksGrid(tracks);
+                renderAdminTable();
+            }
+        }
+
+        /* --- VISUALIZER & PARTICLES --- */
+        function setupAudioVisualizer() {
+            const canvas = document.getElementById('visualizerCanvas');
+            const ctx = canvas.getContext('2d');
+
+            function draw() {
+                requestAnimationFrame(draw);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const numBars = 12;
+                const barWidth = 4;
+                const gap = 2;
+
+                for (let i = 0; i < numBars; i++) {
+                    let barHeight = isPlaying ? Math.random() * (canvas.height - 4) + 4 : 3;
+                    const x = i * (barWidth + gap);
+                    
+                    const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
+                    gradient.addColorStop(0, '#06b6d4');
+                    gradient.addColorStop(1, '#ec4899');
+
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                }
+            }
+            draw();
+        }
+
+        function initBackgroundParticles() {
+            const canvas = document.getElementById('bgParticles');
+            const ctx = canvas.getContext('2d');
+
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const particles = Array.from({ length: 40 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                radius: Math.random() * 2 + 1,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: (Math.random() - 0.5) * 0.4,
+                alpha: Math.random() * 0.5 + 0.2
+            }));
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0) p.x = width;
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height;
+                    if (p.y > height) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(139, 92, 246, ${p.alpha})`;
+                    ctx.fill();
+                });
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>
